@@ -32,6 +32,16 @@ class ShopSettingsService
         return $this->status() === ShopStatus::Open;
     }
 
+    /** @param array<string, string|null> $settings */
+    public function update(array $settings): array
+    {
+        foreach ($settings as $key => $value) {
+            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+        }
+
+        return $this->all();
+    }
+
     /** @return array<string, mixed> */
     public function publicPayload(): array
     {
