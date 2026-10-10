@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\DashboardController;
+use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Auth\AdminAuthController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Customer\CategoryController;
@@ -38,6 +40,8 @@ Route::prefix('v1')->group(function () {
 
     // ---- Admin (Phase 11) ----
     Route::prefix('admin')->middleware(['auth:sanctum', 'active', 'admin'])->group(function () {
-        // admin routes added in Phase 11
+        Route::get('dashboard', [DashboardController::class, 'show']);
+        Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->whereNumber('order');
+        Route::post('orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->whereNumber('order');
     });
 });

@@ -40,4 +40,18 @@ class PaymentService
 
         return $payment;
     }
+
+    public function refundForOrder(Order $order): void
+    {
+        $payment = $order->payment;
+
+        if (! $payment || $payment->status !== PaymentStatus::Paid || $payment->provider !== 'mock') {
+            return;
+        }
+
+        $payment->update(['status' => PaymentStatus::Refunded]);
+        $order->update(['payment_status' => PaymentStatus::Refunded]);
+
+        Log::info('payment.refunded', ['order_id' => $order->id, 'payment_id' => $payment->id]);
+    }
 }
