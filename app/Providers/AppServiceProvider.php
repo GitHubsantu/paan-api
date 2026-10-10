@@ -6,6 +6,8 @@ use App\Services\Otp\NullOtpSender;
 use App\Services\Otp\OtpSender;
 use App\Services\Payments\MockPaymentGateway;
 use App\Services\Payments\PaymentGateway;
+use App\Services\Push\NullPushSender;
+use App\Services\Push\PushSender;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -17,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Swap for a real SMS sender later.
         $this->app->bind(OtpSender::class, NullOtpSender::class);
+        $this->app->bind(PushSender::class, NullPushSender::class);
         $this->app->bind(PaymentGateway::class, fn () => match (config('payment.driver')) {
             'mock' => new MockPaymentGateway,
             default => throw new \RuntimeException('Unsupported payment driver.'),
@@ -34,5 +37,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('auth', fn (Request $r) => Limit::perMinute(5)->by($r->input('phone').'|'.$r->ip()));
 
         RateLimiter::for('orders', fn (Request $r) => Limit::perMinute(20)->by($r->user()?->id ?: $r->ip()));
+
+        RateLimiter::for('admin-writes', fn (Request $r) => Limit::perMinute(60)->by($r->user()?->id ?: $r->ip()));
+        RateLimiter::for('device-tokens', fn (Request $r) => Limit::perMinute(10)->by($r->user()?->id ?: $r->ip()));
     }
 }

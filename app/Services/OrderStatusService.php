@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class OrderStatusService
 {
-    public function __construct(private PaymentService $payments) {}
+    public function __construct(private PaymentService $payments, private NotificationService $notifications) {}
 
     public function transition(Order $order, OrderStatus $to, User $admin, ?string $note = null): Order
     {
@@ -38,7 +38,10 @@ class OrderStatusService
             ]);
             Log::info('order.status_changed', ['order_id' => $order->id, 'admin_id' => $admin->id]);
 
-            return $order->fresh(['items.addons', 'payment', 'statusHistories']);
+            $order = $order->fresh(['items.addons', 'payment', 'statusHistories']);
+            DB::afterCommit(fn () => $this->notifications->notifyOrderStatusChanged($order));
+
+            return $order;
         });
     }
 
@@ -69,7 +72,10 @@ class OrderStatusService
             }
             Log::info('order.cancelled', ['order_id' => $order->id, 'admin_id' => $admin->id]);
 
-            return $order->fresh(['items.addons', 'payment', 'statusHistories']);
+            $order = $order->fresh(['items.addons', 'payment', 'statusHistories']);
+            DB::afterCommit(fn () => $this->notifications->notifyOrderStatusChanged($order));
+
+            return $order;
         });
     }
 }

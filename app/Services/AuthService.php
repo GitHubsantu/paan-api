@@ -64,6 +64,9 @@ class AuthService
         if (! $user->is_active) {
             throw new ApiException('Your account is deactivated.', 403);
         }
+        if ($user->isAdmin()) {
+            throw new ApiException('This account must use admin login.', 403);
+        }
 
         return [$user, $this->issueToken($user, 'customer')];
     }
