@@ -71,7 +71,7 @@ class OtpService
             throw new ApiException('Too many incorrect attempts. Please request a new OTP.', 429);
         }
         if ($result !== 'ok') {
-            throw new ApiException('Invalid or expired OTP.', 422, ['otp' => ['Invalid or expired OTP.']]);
+            throw new ApiException('The OTP is incorrect or has expired.', 422, ['otp' => ['The OTP is incorrect or has expired.']], 'OTP_INVALID');
         }
     }
 

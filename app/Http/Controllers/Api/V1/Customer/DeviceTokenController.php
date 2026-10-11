@@ -16,7 +16,7 @@ class DeviceTokenController extends Controller
         $data = $request->validated();
         DeviceToken::updateOrCreate(
             ['user_id' => $request->user()->id, 'token' => $data['token']],
-            ['platform' => $data['platform'], 'last_used_at' => now()],
+            ['platform' => $data['platform'], 'app' => $data['app'] ?? ($request->user()->isAdmin() ? 'admin' : 'customer'), 'last_used_at' => now()],
         );
 
         return ApiResponse::success(null, 'Device token saved successfully.', 201);

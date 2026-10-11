@@ -16,13 +16,18 @@ class ApiResponse
         ], $status);
     }
 
-    public static function error(string $message, int $status = 400, array $errors = [], array $headers = []): JsonResponse
+    public static function error(string $message, int $status = 400, array $errors = [], array $headers = [], ?string $code = null): JsonResponse
     {
-        return response()->json([
+        $payload = [
             'success' => false,
             'message' => $message,
             'errors' => (object) $errors,
-        ], $status, $headers);
+        ];
+        if ($code !== null) {
+            $payload['code'] = $code;
+        }
+
+        return response()->json($payload, $status, $headers);
     }
 
     public static function paginated(LengthAwarePaginator $p, string $resource, string $message = 'OK'): JsonResponse

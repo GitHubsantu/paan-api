@@ -32,7 +32,7 @@ class OrderStatusServiceTest extends TestCase
         ]);
     }
 
-    public function test_rejects_an_invalid_status_transition_with_409(): void
+    public function test_rejects_an_invalid_status_transition_with_422(): void
     {
         $admin = User::factory()->admin()->create();
         $order = $this->createOrder(OrderStatus::Pending);
@@ -41,7 +41,7 @@ class OrderStatusServiceTest extends TestCase
             app(OrderStatusService::class)->transition($order, OrderStatus::Completed, $admin);
             $this->fail('Expected an ApiException.');
         } catch (ApiException $exception) {
-            $this->assertSame(409, $exception->status);
+            $this->assertSame(422, $exception->status);
         }
     }
 

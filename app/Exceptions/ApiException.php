@@ -10,6 +10,7 @@ class ApiException extends RuntimeException
         string $message,
         public int $status = 422,
         public array $errors = [],
+        public ?string $errorCode = null,
     ) {
         parent::__construct($message);
     }

@@ -17,4 +17,17 @@ class Media
 
         return Storage::disk(config('filesystems.default'))->url($path);
     }
+
+    public static function thumbnailUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $base = $extension === '' ? $path : substr($path, 0, -(strlen($extension) + 1));
+        $thumbnail = $base.'-thumb.webp';
+
+        return self::url($thumbnail);
+    }
 }

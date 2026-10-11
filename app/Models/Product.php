@@ -15,6 +15,7 @@ class Product extends Model
     protected $fillable = [
         'category_id', 'name', 'slug', 'description', 'price',
         'image', 'is_available', 'is_featured', 'sort_order',
+        'tag', 'prep_minutes', 'ingredients',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class Product extends Model
             'price' => 'decimal:2',
             'is_available' => 'boolean',
             'is_featured' => 'boolean',
+            'ingredients' => 'array',
         ];
     }
 

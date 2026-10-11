@@ -23,6 +23,7 @@ Route::prefix('v1')->group(function () {
     // ---- Public auth ----
     Route::prefix('auth')->group(function () {
         Route::post('otp/send', [AuthController::class, 'sendOtp'])->middleware('throttle:otp');
+        Route::post('otp/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:otp-verify');
         Route::post('register', [AuthController::class, 'register'])->middleware('throttle:auth');
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:auth');
     });
@@ -74,6 +75,7 @@ Route::prefix('v1')->group(function () {
         Route::get('products', [AdminProductController::class, 'index']);
         Route::post('products', [AdminProductController::class, 'store'])->middleware('throttle:admin-writes');
         Route::put('products/{product}', [AdminProductController::class, 'update'])->middleware('throttle:admin-writes');
+        Route::patch('products/{product}/availability', [AdminProductController::class, 'updateAvailability'])->middleware('throttle:admin-writes');
         Route::delete('products/{product}', [AdminProductController::class, 'destroy'])->middleware('throttle:admin-writes');
     });
 });

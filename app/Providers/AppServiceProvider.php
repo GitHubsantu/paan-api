@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\AdminNotifications\AdminOrderNotifier;
+use App\Services\AdminNotifications\NullAdminOrderNotifier;
 use App\Services\Otp\NullOtpSender;
 use App\Services\Otp\OtpSender;
 use App\Services\Payments\MockPaymentGateway;
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Swap for a real SMS sender later.
         $this->app->bind(OtpSender::class, NullOtpSender::class);
+        $this->app->bind(AdminOrderNotifier::class, NullAdminOrderNotifier::class);
         $this->app->bind(PushSender::class, NullPushSender::class);
         $this->app->bind(PaymentGateway::class, fn () => match (config('payment.driver')) {
             'mock' => new MockPaymentGateway,
@@ -28,10 +31,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        RateLimiter::for('otp', fn (Request $r) => [
-            Limit::perMinute(3)->by('otp-m|'.$r->input('phone').'|'.$r->ip()),
-            Limit::perHour(10)->by('otp-h|'.$r->input('phone')),
-        ]);
+        RateLimiter::for('otp', fn (Request $r) => Limit::perMinutes(10, 5)->by('otp|'.$r->input('phone').'|'.$r->ip()));
+        RateLimiter::for('otp-verify', fn (Request $r) => Limit::perMinutes(10, 10)->by('otp-verify|'.$r->input('phone').'|'.$r->ip()));
 
         // OTP verify / admin login attempts
         RateLimiter::for('auth', fn (Request $r) => Limit::perMinute(5)->by($r->input('phone').'|'.$r->ip()));

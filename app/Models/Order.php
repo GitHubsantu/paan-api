@@ -17,6 +17,7 @@ class Order extends Model
     protected $fillable = [
         'user_id', 'order_number', 'status', 'payment_status', 'subtotal', 'total',
         'comment', 'placed_at', 'completed_at', 'cancelled_at', 'cancel_reason',
+        'token', 'token_date', 'payment_method', 'payment_channel', 'idempotency_key',
     ];
 
     protected function casts(): array
@@ -29,6 +30,7 @@ class Order extends Model
             'placed_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'token_date' => 'date',
         ];
     }
 

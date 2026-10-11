@@ -9,6 +9,6 @@ class DeviceTokenPolicy
 {
     public function delete(User $user, DeviceToken $deviceToken): bool
     {
-        return $user->tokenCan('customer') && $user->id === $deviceToken->user_id;
+        return ($user->tokenCan('customer') || $user->tokenCan('admin')) && $user->id === $deviceToken->user_id;
     }
 }

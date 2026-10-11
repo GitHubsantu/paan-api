@@ -6,36 +6,18 @@ use App\Exceptions\ApiException;
 use App\Models\User;
 use App\Services\Otp\OtpService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthService
 {
     public function __construct(private OtpService $otp) {}
 
-    /** @return array{expires_in:int, resend_after:int, debug_otp?:string} */
+    /** @return array{resend_after:int} */
     public function sendOtp(string $phone, string $purpose): array
     {
-        $user = User::where('phone', $phone)->first();
-        $debugOtp = null;
+        $this->otp->issue($phone);
 
-        if ($purpose === 'register') {
-            if ($user) {
-                throw new ApiException('This phone number is already registered. Please log in.', 409);
-            }
-            $debugOtp = $this->otp->issue($phone);
-        } elseif ($user && $user->is_active) {
-            // Login: same response whether or not the account exists (no enumeration).
-            $debugOtp = $this->otp->issue($phone);
-        }
-
-        $response = [
-            'expires_in' => config('otp.ttl_minutes') * 60,
-            'resend_after' => (int) config('otp.resend_seconds'),
-        ];
-        if ($debugOtp !== null) {
-            $response['debug_otp'] = $debugOtp; // mock mode only
-        }
-
-        return $response;
+        return ['resend_after' => (int) config('otp.resend_seconds')];
     }
 
     /** @return array{0: User, 1: string} */
@@ -71,13 +53,31 @@ class AuthService
         return [$user, $this->issueToken($user, 'customer')];
     }
 
+    /** @return array{0: User, 1: string, 2: bool} */
+    public function verifyCustomerOtp(string $phone, string $otp): array
+    {
+        $this->otp->verify($phone, $otp);
+        $user = User::where('phone', $phone)->first();
+
+        if ($user && ($user->isAdmin() || ! $user->is_active)) {
+            throw new ApiException("This number can't sign in here.", 403, [], 'NOT_ALLOWED');
+        }
+
+        $isNewUser = ! $user;
+        $user ??= User::create(['name' => null, 'phone' => $phone]);
+
+        return [$user, $this->issueToken($user, 'customer'), $isNewUser];
+    }
+
     /** @return array{0: User, 1: string} */
     public function attemptAdmin(string $phone, string $password): array
     {
         $user = User::where('phone', $phone)->where('role', 'admin')->first();
 
         if (! $user || ! $user->password || ! Hash::check($password, $user->password)) {
-            throw new ApiException('Invalid phone or password.', 401);
+            Log::warning('Admin login failed.', ['phone' => $phone]);
+
+            throw new ApiException('Incorrect phone number or password.', 422);
         }
         if (! $user->is_active) {
             throw new ApiException('Your account is deactivated.', 403);

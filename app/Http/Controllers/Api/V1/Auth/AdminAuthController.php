@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
-use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +20,11 @@ class AdminAuthController extends Controller
         );
 
         return ApiResponse::success([
-            'user' => new UserResource($user),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ],
             'token' => $token,
         ], 'Admin logged in successfully.');
     }

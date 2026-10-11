@@ -15,7 +15,7 @@ class AdminDashboardService
         $paidOrders = Order::query()->where('payment_status', PaymentStatus::Paid)->where('status', '!=', OrderStatus::AdminCancelled);
 
         return [
-            'today_orders' => (clone $paidOrders)->whereDate('created_at', $today)->count(),
+            'today_orders' => Order::query()->whereDate('created_at', $today)->count(),
             'status_counts' => collect(OrderStatus::cases())->mapWithKeys(fn (OrderStatus $status) => [$status->value => Order::where('status', $status)->whereDate('created_at', $today)->count()])->all(),
             'today_sales' => (float) ((clone $paidOrders)->whereDate('created_at', $today)->sum('total')),
             'total_sales' => (float) $paidOrders->sum('total'),

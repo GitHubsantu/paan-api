@@ -12,7 +12,7 @@ class StoreDeviceTokenRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return (bool) $this->user()?->tokenCan('customer');
+        return (bool) $this->user()?->currentAccessToken();
     }
 
     /**
@@ -25,6 +25,7 @@ class StoreDeviceTokenRequest extends FormRequest
         return [
             'token' => ['required', 'string', 'max:191'],
             'platform' => ['required', 'in:android'],
+            'app' => ['nullable', 'in:customer,admin'],
         ];
     }
 }

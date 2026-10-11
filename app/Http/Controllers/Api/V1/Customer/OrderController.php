@@ -27,7 +27,9 @@ class OrderController extends Controller
         $filters = $request->validated();
         $orders = $request->user()->orders()
             ->with('items.addons')
-            ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+            ->when($filters['status'] ?? null, fn ($query, string $status) => $status === 'active'
+                ? $query->whereIn('status', ['pending', 'making', 'ready'])
+                : $query->where('status', $status))
             ->latest()
             ->paginate($filters['per_page'] ?? 15);
 
@@ -36,18 +38,18 @@ class OrderController extends Controller
 
     public function store(CreateOrderRequest $request): JsonResponse
     {
-        $order = $this->orders->create($request->user(), $request->validated());
+        [$order, $created] = $this->orders->create($request->user(), $request->validated(), $request->header('Idempotency-Key'));
 
         return ApiResponse::success(
             (new OrderResource($order))->resolve($request),
             'Order placed successfully.',
-            201
+            $created ? 201 : 200
         );
     }
 
     public function show(Request $request, int $order): JsonResponse
     {
-        $order = $this->findCustomerOrder($request, $order);
+        $order = $this->findCustomerOrder($request, $order, ['items.addons', 'statusHistories']);
 
         return ApiResponse::success(
             (new OrderResource($order))->resolve($request),
@@ -60,6 +62,7 @@ class OrderController extends Controller
         $order = $this->findCustomerOrder($request, $order, ['statusHistories']);
 
         return ApiResponse::success([
+            'id' => $order->id,
             'order_number' => $order->order_number,
             'status' => $order->status->value,
             'payment_status' => $order->payment_status->value,

@@ -22,6 +22,7 @@ class CustomerOrderControllerTest extends TestCase
         $customer = User::factory()->create();
         $otherCustomer = User::factory()->create();
         $olderOrder = $this->createOrder($customer, ['created_at' => now()->subMinute()]);
+        $olderOrder->forceFill(['created_at' => now()->subMinute()])->save();
         $newerOrder = $this->createOrder($customer);
         $this->createOrder($otherCustomer);
 
@@ -58,7 +59,7 @@ class CustomerOrderControllerTest extends TestCase
 
         $this->getJson("/api/v1/orders/{$otherOrder->id}")
             ->assertNotFound()
-            ->assertJsonPath('message', 'Resource not found.');
+            ->assertJsonPath('message', 'Not found.');
     }
 
     public function test_returns_order_detail_from_snapshots_when_the_product_is_deleted(): void

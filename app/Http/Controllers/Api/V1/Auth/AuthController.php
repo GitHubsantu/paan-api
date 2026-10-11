@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\OtpLoginRequest;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Requests\Api\V1\Auth\SendOtpRequest;
+use App\Http\Requests\Api\V1\Auth\VerifyOtpRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use App\Support\ApiResponse;
@@ -18,9 +19,20 @@ class AuthController extends Controller
 
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
-        $data = $this->auth->sendOtp($request->validated('phone'), $request->validated('purpose'));
+        $data = $this->auth->sendOtp($request->validated('phone'), $request->validated('purpose', 'auth'));
 
         return ApiResponse::success($data, 'If the number is eligible, an OTP has been sent.');
+    }
+
+    public function verifyOtp(VerifyOtpRequest $request): JsonResponse
+    {
+        [$user, $token, $isNewUser] = $this->auth->verifyCustomerOtp($request->validated('phone'), $request->validated('otp'));
+
+        return ApiResponse::success([
+            'token' => $token,
+            'is_new_user' => $isNewUser,
+            'user' => ['id' => $user->id, 'name' => $user->name, 'phone' => $user->phone, 'email' => $user->email],
+        ], 'Signed in successfully.');
     }
 
     public function register(RegisterRequest $request): JsonResponse

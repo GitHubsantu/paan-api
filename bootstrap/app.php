@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EnsureUserIsAdmin::class,
         ]);
         $middleware->redirectGuestsTo(fn () => null);
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn (Request $r) => $r->is('api/*') || $r->expectsJson());
@@ -37,15 +38,15 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return match (true) {
-                $e instanceof ApiException => ApiResponse::error($e->getMessage(), $e->status, $e->errors),
-                $e instanceof ValidationException => ApiResponse::error('Validation failed.', 422, $e->errors()),
+                $e instanceof ApiException => ApiResponse::error($e->getMessage(), $e->status, $e->errors, [], $e->errorCode),
+                $e instanceof ValidationException => ApiResponse::error($e->validator->errors()->first(), 422, $e->errors()),
                 $e instanceof AuthenticationException => ApiResponse::error('Unauthenticated.', 401),
                 $e instanceof AuthorizationException => ApiResponse::error('You are not authorized to perform this action.', 403),
-                $e instanceof ModelNotFoundException => ApiResponse::error('Resource not found.', 404),
+                $e instanceof ModelNotFoundException => ApiResponse::error('Not found.', 404),
                 $e instanceof HttpExceptionInterface => ApiResponse::error(
                     match ($e->getStatusCode()) {
                         403 => 'You are not authorized to perform this action.',
-                        404 => 'Resource not found.',
+                        404 => 'Not found.',
                         405 => 'Method not allowed.',
                         429 => 'Too many requests. Please try again later.',
                         default => $e->getMessage() ?: 'Request failed.',

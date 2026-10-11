@@ -16,6 +16,8 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'image' => Media::url($this->image),
+            'image_url' => Media::url($this->image),
+            'sort_order' => $this->sort_order,
         ];
     }
 }

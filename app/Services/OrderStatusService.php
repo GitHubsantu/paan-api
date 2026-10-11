@@ -21,8 +21,12 @@ class OrderStatusService
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
             $from = $order->status;
 
+            if ($from === $to) {
+                return $this->loadOrder($order);
+            }
+
             if (! $from->canTransitionTo($to)) {
-                throw new ApiException("Order cannot transition from {$from->value} to {$to->value}.", 409);
+                throw new ApiException("This order can't move from {$from->value} to {$to->value}.");
             }
 
             $order->update([
@@ -38,7 +42,7 @@ class OrderStatusService
             ]);
             Log::info('order.status_changed', ['order_id' => $order->id, 'admin_id' => $admin->id]);
 
-            $order = $order->fresh(['items.addons', 'payment', 'statusHistories']);
+            $order = $this->loadOrder($order);
             DB::afterCommit(fn () => $this->notifications->notifyOrderStatusChanged($order));
 
             return $order;
@@ -52,7 +56,7 @@ class OrderStatusService
             $from = $order->status;
 
             if (! in_array($from, [OrderStatus::Pending, OrderStatus::Making, OrderStatus::Ready], true)) {
-                throw new ApiException("Order cannot be cancelled from {$from->value}.", 409);
+                throw new ApiException("Order cannot be cancelled from {$from->value}.");
             }
 
             $order->update([
@@ -72,10 +76,20 @@ class OrderStatusService
             }
             Log::info('order.cancelled', ['order_id' => $order->id, 'admin_id' => $admin->id]);
 
-            $order = $order->fresh(['items.addons', 'payment', 'statusHistories']);
+            $order = $this->loadOrder($order);
             DB::afterCommit(fn () => $this->notifications->notifyOrderStatusChanged($order));
 
             return $order;
         });
+    }
+
+    private function loadOrder(Order $order): Order
+    {
+        return $order->fresh([
+            'user:id,name,phone',
+            'items.addons',
+            'payment',
+            'statusHistories.changedBy:id,name',
+        ]);
     }
 }

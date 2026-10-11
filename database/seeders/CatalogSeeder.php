@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Addon;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
@@ -12,49 +11,28 @@ class CatalogSeeder extends Seeder
 {
     public function run(): void
     {
-        $addons = collect([
-            ['Extra Chocolate', 10],
-            ['Dry Fruits', 20],
-            ['Extra Sweet', 5],
-            ['Extra Supari', 5],
-        ])->map(fn ($a) => Addon::create(['name' => $a[0], 'price' => $a[1]]))->keyBy('name');
-
         $catalog = [
-            'Sweet Paan' => [
-                ['Meetha Paan', 30, true, ['Extra Sweet', 'Dry Fruits']],
-                ['Kesar Paan', 50, true, ['Extra Sweet', 'Dry Fruits']],
-            ],
-            'Sada Paan' => [
-                ['Sada Paan', 20, false, ['Extra Supari']],
-            ],
-            'Chocolate Paan' => [
-                ['Chocolate Paan', 60, true, ['Extra Chocolate', 'Dry Fruits']],
-            ],
-            'Special Paan' => [
-                ['Royal Special Paan', 80, true, ['Dry Fruits', 'Extra Sweet', 'Extra Supari']],
-                ['Dry Fruit Paan', 90, false, ['Extra Sweet']],
-            ],
+            ['Sweet Paan (Meetha)', [['Shahi Meetha Paan', 40, 'Chandi Vark', 3, true, true, 'Gulkand, glazed cherries, tutty-fruitty, green cardamom, silver leaf.', ['Magahi Betel Leaf', 'Gulkand', 'Glazed Cherries', 'Silver Leaf', 'Green Cardamom']]]],
+            ['Chocolate Paan', [['Belgian Dark Chocolate Paan', 80, 'Gourmet', 4, true, true, 'Rich dark chocolate ganache, roasted almonds, gold dust.', ['Magahi Betel Leaf', 'Dark Chocolate Ganache', 'Roasted Almonds', 'Edible Gold Dust']]]],
+            ['Sada & Saunf', [['Sada Saunf Paan', 25, null, 2, true, false, 'Classic fresh betel leaf with fennel and light sweet filling.', []]]],
+            ['Special Royal Gilouri', [['Royal Silver Vark Thali Selection', 250, "Chef's Masterpiece", 5, true, true, 'Hand-folded with fresh Magahi leaves & Shahi Gulkand for celebratory dining.', ['Magahi Betel Leaf', 'Shahi Gulkand', 'Silver Vark', 'Green Cardamom']], ['Banarasi Special Gilouri', 60, 'Heritage Classic', 4, true, false, 'Authentic Banarasi betel leaf, fragrant saunf, cloves & dates.', ['Banarasi Betel Leaf', 'Lucknowi Saunf', 'Cloves', 'Dates', 'Silver Vark']]]],
+            ['Ice / Fire Paan', [['Fire Paan', 90, 'Showstopper', 3, false, false, 'Flambe-style showpiece paan, made fresh at the counter.', []]]],
+            ['Mouth Freshener', []],
         ];
 
-        $order = 0;
-        foreach ($catalog as $categoryName => $products) {
-            $category = Category::create([
-                'name' => $categoryName,
-                'slug' => Str::slug($categoryName),
-                'sort_order' => $order++,
-            ]);
+        foreach ($catalog as $sortOrder => [$categoryName, $products]) {
+            $slug = Str::slug($categoryName);
+            $category = Category::withTrashed()->firstOrNew(['slug' => $slug]);
+            $category->fill(['name' => $categoryName, 'description' => null, 'sort_order' => $sortOrder + 1, 'is_active' => true]);
+            $category->deleted_at = null;
+            $category->save();
 
-            foreach ($products as $i => [$name, $price, $featured, $addonNames]) {
-                $product = Product::create([
-                    'category_id' => $category->id,
-                    'name' => $name,
-                    'slug' => Str::slug($name),
-                    'description' => "{$name} freshly prepared at the shop.",
-                    'price' => $price,
-                    'is_featured' => $featured,
-                    'sort_order' => $i,
-                ]);
-                $product->addons()->attach(collect($addonNames)->map(fn ($n) => $addons[$n]->id));
+            foreach ($products as $productData) {
+                [$name, $price, $tag, $prepMinutes, $available, $featured, $description, $ingredients] = $productData;
+                $product = Product::withTrashed()->firstOrNew(['slug' => Str::slug($name)]);
+                $product->fill(['category_id' => $category->id, 'name' => $name, 'description' => $description, 'price' => $price, 'tag' => $tag, 'prep_minutes' => $prepMinutes, 'ingredients' => $ingredients, 'is_available' => $available, 'is_featured' => $featured, 'sort_order' => 0]);
+                $product->deleted_at = null;
+                $product->save();
             }
         }
     }

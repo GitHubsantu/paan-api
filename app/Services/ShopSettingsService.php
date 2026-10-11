@@ -17,7 +17,13 @@ class ShopSettingsService
     {
         $stored = Setting::whereIn('key', self::KEYS)->pluck('value', 'key')->all();
 
-        return collect(self::KEYS)->mapWithKeys(fn ($k) => [$k => $stored[$k] ?? null])->all();
+        return collect(self::KEYS)->mapWithKeys(function (string $key) use ($stored): array {
+            $value = $stored[$key] ?? null;
+
+            return [$key => in_array($key, ['opening_time', 'closing_time'], true) && $value !== null
+                ? substr($value, 0, 5)
+                : $value];
+        })->all();
     }
 
     public function status(): ShopStatus
@@ -55,6 +61,7 @@ class ShopSettingsService
             'opening_time' => $s['opening_time'],
             'closing_time' => $s['closing_time'],
             'pickup_message' => $s['pickup_message'],
+            'shop_status' => $s['shop_status'],
             'is_open' => $open,
             'status' => $open ? 'open' : 'closed',
             'status_message' => $open ? null : 'Shop is currently closed.',

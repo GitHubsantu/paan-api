@@ -34,29 +34,44 @@ class OrderController extends Controller
     public function index(OrderIndexRequest $request): JsonResponse
     {
         $filters = $request->validated();
-        $orders = Order::query()->with('user:id,name,phone')
-            ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
+        $orders = Order::query()->with(['user:id,name,phone', 'items.addons', 'statusHistories.changedBy:id,name'])
+            ->when($filters['status'] ?? null, function ($query, string $status): void {
+                if ($status === 'active') {
+                    $query->whereIn('status', ['pending', 'making', 'ready']);
+
+                    return;
+                }
+
+                if ($status === 'history') {
+                    $query->whereIn('status', ['completed', 'admin_cancelled']);
+
+                    return;
+                }
+
+                $query->where('status', $status);
+            })
             ->when($filters['payment_status'] ?? null, fn ($query, string $status) => $query->where('payment_status', $status))
             ->when($filters['from'] ?? null, fn ($query, string $from) => $query->whereDate('created_at', '>=', $from))
             ->when($filters['to'] ?? null, fn ($query, string $to) => $query->whereDate('created_at', '<=', $to))
+            ->when($filters['updated_after'] ?? null, fn ($query, string $updatedAfter) => $query->where('updated_at', '>', $updatedAfter))
             ->when($filters['search'] ?? null, function ($query, string $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('order_number', 'like', "%{$search}%")
                         ->orWhereHas('user', fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
                 });
-            })->latest()->paginate($filters['per_page'] ?? 15);
+            })->when(($filters['sort'] ?? null) === 'oldest', fn ($query) => $query->oldest(), fn ($query) => $query->latest())->paginate($filters['per_page'] ?? 15);
 
         return ApiResponse::paginated($orders, OrderResource::class, 'Orders retrieved successfully.');
     }
 
     public function show(Order $order): JsonResponse
     {
-        $order->load(['user:id,name,phone', 'items.addons', 'payment', 'statusHistories']);
+        $order->load(['user:id,name,phone', 'items.addons', 'payment', 'statusHistories.changedBy:id,name']);
 
-        return ApiResponse::success([
-            'order' => (new OrderResource($order))->resolve(request()),
-            'customer' => ['name' => $order->user->name, 'phone' => $order->user->phone],
-            'status_history' => $order->statusHistories->map(fn ($history) => ['status' => $history->new_status->value, 'timestamp' => $history->created_at?->toIso8601String()])->values(),
-        ], 'Order retrieved successfully.');
+        $data = (new OrderResource($order))->resolve(request());
+        $data['order'] = $data;
+        $data['status_history'] = $data['history'] ?? [];
+
+        return ApiResponse::success($data, 'Order retrieved successfully.');
     }
 }

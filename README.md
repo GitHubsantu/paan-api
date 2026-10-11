@@ -7,6 +7,16 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Android device testing
+
+An Android phone cannot resolve local `*.test` hostnames. For local network testing, run:
+
+```powershell
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+Set `APP_URL=http://<PC-LAN-IP>:8000` before serving so API image URLs are reachable from the phone, and allow port `8000` through the operating-system firewall. Run `php artisan storage:link` once for local uploaded images. Configure web-server image responses with `Cache-Control: public, max-age=31536000, immutable` in production. Production deployments must use HTTPS only.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

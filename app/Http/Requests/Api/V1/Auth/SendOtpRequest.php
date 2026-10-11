@@ -21,7 +21,7 @@ class SendOtpRequest extends FormRequest
     {
         return [
             'phone' => ['required', 'regex:'.Phone::REGEX],
-            'purpose' => ['required', 'in:register,login'],
+            'purpose' => ['nullable', 'in:register,login,auth'],
         ];
     }
 
