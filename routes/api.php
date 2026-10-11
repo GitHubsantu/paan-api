@@ -62,10 +62,16 @@ Route::prefix('v1')->group(function () {
         Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->whereNumber('order')->middleware('throttle:admin-writes');
         Route::post('orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->whereNumber('order')->middleware('throttle:admin-writes');
         Route::get('customers', [CustomerController::class, 'index']);
+        Route::post('customers', [CustomerController::class, 'store'])->middleware('throttle:admin-writes');
+        Route::get('customers/{customer}', [CustomerController::class, 'show'])->whereNumber('customer');
+        Route::put('customers/{customer}', [CustomerController::class, 'update'])->whereNumber('customer')->middleware('throttle:admin-writes');
+        Route::patch('customers/{customer}/block', [CustomerController::class, 'block'])->whereNumber('customer')->middleware('throttle:admin-writes');
+        Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->whereNumber('customer')->middleware('throttle:admin-writes');
         Route::get('settings', [SettingController::class, 'index']);
         Route::put('settings', [SettingController::class, 'update'])->middleware('throttle:admin-writes');
         Route::get('categories', [AdminCategoryController::class, 'index']);
         Route::post('categories', [AdminCategoryController::class, 'store'])->middleware('throttle:admin-writes');
+        Route::post('categories/{category}', [AdminCategoryController::class, 'update'])->middleware('throttle:admin-writes');
         Route::put('categories/{category}', [AdminCategoryController::class, 'update'])->middleware('throttle:admin-writes');
         Route::delete('categories/{category}', [AdminCategoryController::class, 'destroy'])->middleware('throttle:admin-writes');
         Route::get('addons', [AdminAddonController::class, 'index']);
@@ -73,7 +79,9 @@ Route::prefix('v1')->group(function () {
         Route::put('addons/{addon}', [AdminAddonController::class, 'update'])->middleware('throttle:admin-writes');
         Route::delete('addons/{addon}', [AdminAddonController::class, 'destroy'])->middleware('throttle:admin-writes');
         Route::get('products', [AdminProductController::class, 'index']);
+        Route::get('products/{product}', [AdminProductController::class, 'show'])->whereNumber('product');
         Route::post('products', [AdminProductController::class, 'store'])->middleware('throttle:admin-writes');
+        Route::post('products/{product}', [AdminProductController::class, 'update'])->whereNumber('product')->middleware('throttle:admin-writes');
         Route::put('products/{product}', [AdminProductController::class, 'update'])->middleware('throttle:admin-writes');
         Route::patch('products/{product}/availability', [AdminProductController::class, 'updateAvailability'])->middleware('throttle:admin-writes');
         Route::delete('products/{product}', [AdminProductController::class, 'destroy'])->middleware('throttle:admin-writes');

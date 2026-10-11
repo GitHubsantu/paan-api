@@ -17,7 +17,10 @@ class CategoryResource extends JsonResource
             'description' => $this->description,
             'image' => Media::url($this->image),
             'image_url' => Media::url($this->image),
+            'thumbnail_url' => Media::thumbnailUrl($this->image),
             'sort_order' => $this->sort_order,
+            'is_active' => $this->is_active,
+            'products_count' => $this->whenCounted('products'),
         ];
     }
 }

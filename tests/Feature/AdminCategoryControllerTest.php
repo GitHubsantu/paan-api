@@ -39,6 +39,7 @@ class AdminCategoryControllerTest extends TestCase
 
         $this->deleteJson("/api/v1/admin/categories/{$category->id}")
             ->assertConflict()
-            ->assertJsonPath('message', 'A category with products cannot be deleted.');
+            ->assertJsonPath('message', 'This category still has 1 products. Move or delete them first.')
+            ->assertJsonPath('code', 'CATEGORY_HAS_PRODUCTS');
     }
 }

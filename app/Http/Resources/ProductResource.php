@@ -25,6 +25,7 @@ class ProductResource extends JsonResource
             'tag' => $this->tag,
             'prep_minutes' => $this->prep_minutes,
             'ingredients' => $this->ingredients ?? [],
+            'sort_order' => $this->sort_order,
             'category' => $this->whenLoaded('category', fn () => [
                 'id' => $this->category->id,
                 'name' => $this->category->name,

@@ -204,6 +204,34 @@ Settings fields: `shop_name`, `shop_address`, `shop_phone` (10-digit Indian), `o
 
 ### Catalog administration
 
+Category and product writes use `multipart/form-data`. Android should send updates as `POST` with `_method=PUT`; boolean fields may be `"1"` or `"0"`, and empty text fields become `null`. Images accept jpg/jpeg/png/webp up to 2 MB, preserve the original, are EXIF auto-oriented, and generate fingerprinted WebP large (1080px) and thumb (300px) files. `remove_image=1` clears every stored variant. `image_url` is the large conversion and `thumbnail_url` is the thumb; both are `null` when no image is set.
+
+`GET /api/v1/admin/categories` includes inactive records in `sort_order` order:
+
+```json
+{"success":true,"message":"Categories retrieved successfully.","data":[{"id":1,"name":"Sweet Paan (Meetha)","slug":"sweet-paan-meetha","description":null,"image_url":null,"thumbnail_url":null,"sort_order":1,"is_active":true,"products_count":3}]}
+```
+
+`POST /api/v1/admin/categories` accepts `name` (unique, max 60), `description` (max 255), `sort_order`, `is_active`, `image`, and `remove_image`; it returns `201`. `POST /api/v1/admin/categories/{id}` with `_method=PUT` updates the same fields. Deleting a non-empty category returns:
+
+```json
+{"success":false,"message":"This category still has 3 products. Move or delete them first.","errors":{},"code":"CATEGORY_HAS_PRODUCTS"}
+```
+
+Product list, detail, create, and update responses include `id`, `name`, `description`, numeric `price`, `category_id`, `category`, `image_url`, `thumbnail_url`, booleans `is_available`/`is_featured`, `tag`, `prep_minutes`, `ingredients`, and `sort_order`. Product writes accept the listed fields plus `ingredients_json`, a JSON array string with at most ten strings of at most 40 characters. `[]` clears ingredients. `DELETE /api/v1/admin/products/{id}` soft deletes the product; order snapshots remain available.
+
+### Customer administration
+
+All customer-admin endpoints require an active admin token. Customer objects include `id`, nullable `name`, `phone`, nullable `email`, boolean `is_active`, nullable `blocked_reason`, `orders_count`, and ISO-8601 `created_at`.
+
+`POST /api/v1/admin/customers` accepts `{ "name": "Rahul Das", "phone": "9876543210", "email": null }` and returns `201`. Phone numbers are unique Indian mobile numbers and cannot belong to an admin. A phone retained by a soft-deleted customer returns `409` with code `CUSTOMER_DELETED`.
+
+`GET /api/v1/admin/customers/{id}` adds `recent_orders` (the latest ten summaries) and numeric `total_spent`, excluding admin-cancelled orders. `PUT /api/v1/admin/customers/{id}` updates name, email, and phone.
+
+`PATCH /api/v1/admin/customers/{id}/block` accepts `{ "is_active": false, "reason": "Repeated abuse" }`. Blocking revokes all tokens and makes OTP sign-in and new orders fail with `403` code `CUSTOMER_BLOCKED` and message `This account is blocked. Please contact the shop.` Unblocking uses `is_active: true`.
+
+`DELETE /api/v1/admin/customers/{id}` soft deletes the customer and removes all API/device tokens. Customers with pending, making, or ready orders return `409` code `CUSTOMER_HAS_ACTIVE_ORDERS`. Admin customer/category/product changes are recorded in the audit log.
+
 | Resource | Endpoints | Input |
 |---|---|---|
 | Categories | `GET/POST /admin/categories`, `PUT/DELETE /admin/categories/{category}` | `name`, optional `description`, `image`, `sort_order`, `is_active` |

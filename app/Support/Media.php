@@ -15,7 +15,7 @@ class Media
             return $path;
         }
 
-        return Storage::disk(config('filesystems.default'))->url($path);
+        return Storage::disk('public')->url($path);
     }
 
     public static function thumbnailUrl(?string $path): ?string

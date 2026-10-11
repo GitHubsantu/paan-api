@@ -43,6 +43,9 @@ class AuthService
         if (! $user) {
             throw new ApiException('Invalid or expired OTP.', 422, ['otp' => ['Invalid or expired OTP.']]);
         }
+        if (! $user->is_active && $user->blocked_reason !== null) {
+            throw new ApiException('This account is blocked. Please contact the shop.', 403, [], 'CUSTOMER_BLOCKED');
+        }
         if (! $user->is_active) {
             throw new ApiException('Your account is deactivated.', 403);
         }
@@ -58,6 +61,10 @@ class AuthService
     {
         $this->otp->verify($phone, $otp);
         $user = User::where('phone', $phone)->first();
+
+        if ($user && ! $user->is_active && ! $user->isAdmin() && $user->blocked_reason !== null) {
+            throw new ApiException('This account is blocked. Please contact the shop.', 403, [], 'CUSTOMER_BLOCKED');
+        }
 
         if ($user && ($user->isAdmin() || ! $user->is_active)) {
             throw new ApiException("This number can't sign in here.", 403, [], 'NOT_ALLOWED');
