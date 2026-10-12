@@ -25,7 +25,7 @@ class StoreDeviceTokenRequest extends FormRequest
         return [
             'token' => ['required', 'string', 'max:191'],
             'platform' => ['required', 'in:android'],
-            'app' => ['nullable', 'in:customer,admin'],
+            'app' => ['required', 'in:customer,admin'],
         ];
     }
 }

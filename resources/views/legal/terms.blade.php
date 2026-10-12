@@ -1,0 +1,1 @@
+{{-- DRAFT: review with the shop owner / a lawyer before launch. --}}<x-layout><h1>Terms of service</h1><p>This is a pickup-only service. Orders are made fresh; only the shop can cancel an order. Prices and availability are set by the shop. The app is provided as is.</p></x-layout>

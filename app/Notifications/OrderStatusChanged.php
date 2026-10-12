@@ -29,17 +29,20 @@ class OrderStatusChanged extends Notification
      */
     public function toArray(object $notifiable): array
     {
+        [$title, $body] = match ($this->order->status->value) {
+            'making' => ['Your paan is being prepared', "Order {$this->order->order_number} is being hand-rolled."],
+            'ready' => ['Your order is ready for pickup', "Token #{$this->order->token} - show it at the counter."],
+            'completed' => ['Order collected', 'Thank you! Enjoy your paan.'],
+            default => ['Your order was cancelled by the shop', "Please contact the shop about order {$this->order->order_number}."],
+        };
+
         return [
+            'type' => 'order_status',
             'order_id' => $this->order->id,
             'order_number' => $this->order->order_number,
             'status' => $this->order->status->value,
-            'message' => match ($this->order->status->value) {
-                'making' => "Your order {$this->order->order_number} is being prepared.",
-                'ready' => "Your order {$this->order->order_number} is ready for pickup.",
-                'completed' => "Your order {$this->order->order_number} has been completed.",
-                default => "Your order {$this->order->order_number} was cancelled by the shop.",
-            },
-            'reason' => $this->order->cancel_reason,
+            'title' => $title,
+            'body' => $body,
         ];
     }
 }

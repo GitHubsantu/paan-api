@@ -28,6 +28,19 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            if ($user->wasChanged('is_active') && ! $user->is_active) {
+                $user->deviceTokens()->delete();
+            }
+        });
+
+        static::deleting(function (User $user): void {
+            $user->deviceTokens()->delete();
+        });
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;

@@ -14,7 +14,11 @@ class NotificationController extends Controller
     {
         $notifications = $request->user()->notifications()->latest()->paginate(20);
 
-        return ApiResponse::paginated($notifications, NotificationResource::class, 'Notifications retrieved successfully.');
+        $response = ApiResponse::paginated($notifications, NotificationResource::class, 'Notifications retrieved successfully.');
+        $payload = $response->getData(true);
+        $payload['meta']['unread_count'] = $request->user()->unreadNotifications()->count();
+
+        return response()->json($payload);
     }
 
     public function read(Request $request, string $id): JsonResponse

@@ -44,11 +44,25 @@ Customer token required.
 | GET | `/orders` | List the customer's orders. |
 | GET | `/orders/{order}` | Order detail. |
 | GET | `/orders/{order}/status` | Order status. |
-| GET | `/notifications` | List notifications. |
+| GET | `/notifications` | List notifications, newest first; `meta` includes `unread_count`. |
 | POST | `/notifications/{id}/read` | Mark one notification read. |
 | POST | `/notifications/read-all` | Mark every notification read. |
-| POST | `/device-tokens` | Register a device token. |
-| DELETE | `/device-tokens/{token}` | Remove a device token. |
+| POST | `/device-tokens` | Register or move an Android FCM token to the authenticated user. |
+| DELETE | `/device-tokens/{token}` | Idempotently remove the authenticated user's token. |
+
+`POST /device-tokens` requires `{"token":"...","platform":"android","app":"customer"}` for customer tokens, or `app:"admin"` for admin tokens. A token is globally unique: registering it under another account moves it to the current account. Mismatched role/app pairs return `422`.
+
+Customer order-status notifications return this shape:
+
+```json
+{"success":true,"data":[{"id":"uuid","type":"order_status","title":"Your order is ready for pickup","body":"Token #47 - show it at the counter.","order_id":12,"status":"ready","read_at":null,"created_at":"2026-10-13T10:00:00+05:30"}],"meta":{"current_page":1,"last_page":1,"per_page":20,"total":1,"unread_count":1}}
+```
+
+## Firebase push notifications
+
+FCM uses HTTP v1 service-account credentials. Set `FIREBASE_CREDENTIALS` to the deployed service-account JSON path and `FIREBASE_PROJECT_ID` to its Firebase project ID. Do not commit the JSON file or put credential contents in `.env`.
+
+Pushes are queued with three attempts and 10/30-second backoff. Run a worker in deployed environments with `php artisan queue:work`. `QUEUE_CONNECTION=sync` is suitable for local development. To verify delivery for a user, run `php artisan paan:push-test {phone} {customer|admin}`; it reports token use and tokens removed after an invalid FCM response.
 
 ## Admin dashboard and settings
 

@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Services\AdminNotifications\AdminOrderNotifier;
-use App\Services\AdminNotifications\NullAdminOrderNotifier;
+use App\Services\AdminNotifications\FcmAdminOrderNotifier;
 use App\Services\Otp\NullOtpSender;
 use App\Services\Otp\OtpSender;
 use App\Services\Payments\MockPaymentGateway;
 use App\Services\Payments\PaymentGateway;
-use App\Services\Push\NullPushSender;
+use App\Services\Push\FcmAccessTokenProvider;
+use App\Services\Push\FcmPushSender;
+use App\Services\Push\GoogleFcmAccessTokenProvider;
 use App\Services\Push\PushSender;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -21,8 +23,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Swap for a real SMS sender later.
         $this->app->bind(OtpSender::class, NullOtpSender::class);
-        $this->app->bind(AdminOrderNotifier::class, NullAdminOrderNotifier::class);
-        $this->app->bind(PushSender::class, NullPushSender::class);
+        $this->app->bind(AdminOrderNotifier::class, FcmAdminOrderNotifier::class);
+        $this->app->bind(PushSender::class, FcmPushSender::class);
+        $this->app->bind(FcmAccessTokenProvider::class, GoogleFcmAccessTokenProvider::class);
         $this->app->bind(PaymentGateway::class, fn () => match (config('payment.driver')) {
             'mock' => new MockPaymentGateway,
             default => throw new \RuntimeException('Unsupported payment driver.'),

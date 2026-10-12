@@ -1,0 +1,1 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">@if (! app()->environment('testing')) @vite(['resources/css/app.css']) @endif</head><body class="bg-cream text-ink"><main class="mx-auto max-w-3xl px-4 py-16 prose">{{ $slot }}</main></body></html>

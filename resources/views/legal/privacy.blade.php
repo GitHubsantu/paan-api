@@ -1,0 +1,1 @@
+{{-- DRAFT: review with the shop owner / a lawyer before launch. --}}<x-layout><h1>Privacy policy</h1><p>We collect your name, phone number, order history and device push token to run the pickup service. OTP verification is sent by SMS. We do not sell your data. Contact the shop to request deletion.</p></x-layout>

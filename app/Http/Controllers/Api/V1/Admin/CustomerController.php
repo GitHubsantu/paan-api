@@ -104,6 +104,7 @@ class CustomerController extends Controller
         ])->save();
         if (! $isActive) {
             $customer->tokens()->delete();
+            $customer->deviceTokens()->delete();
         }
         $this->audit->log($request->user(), $customer, $isActive ? 'customer.unblocked' : 'customer.blocked', ['reason' => $customer->blocked_reason]);
 

@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AddonController as AdminAddonController;
+use App\Http\Controllers\Api\V1\Admin\AppReleaseController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\CustomerController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\SettingController;
+use App\Http\Controllers\Api\V1\AppLatestController;
 use App\Http\Controllers\Api\V1\Auth\AdminAuthController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Customer\CategoryController;
@@ -28,6 +30,7 @@ Route::prefix('v1')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:auth');
     });
     Route::post('admin/login', [AdminAuthController::class, 'login'])->middleware('throttle:auth');
+    Route::get('app/latest', AppLatestController::class)->middleware('throttle:30,1');
     // ---- Public catalog ----
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('shop', [ShopController::class, 'show']);
@@ -88,5 +91,12 @@ Route::prefix('v1')->group(function () {
         Route::put('products/{product}', [AdminProductController::class, 'update'])->middleware('throttle:admin-writes');
         Route::patch('products/{product}/availability', [AdminProductController::class, 'updateAvailability'])->middleware('throttle:admin-writes');
         Route::delete('products/{product}', [AdminProductController::class, 'destroy'])->middleware('throttle:admin-writes');
+        Route::get('app-releases', [AppReleaseController::class, 'index']);
+        Route::post('app-releases', [AppReleaseController::class, 'store'])->middleware('throttle:admin-writes');
+        Route::patch('app-releases/{appRelease}', [AppReleaseController::class, 'update'])->middleware('throttle:admin-writes');
+        Route::post('app-releases/{appRelease}/make-current', [AppReleaseController::class, 'makeCurrent'])->middleware('throttle:admin-writes');
+        Route::delete('app-releases/{appRelease}', [AppReleaseController::class, 'destroy'])->middleware('throttle:admin-writes');
+        Route::get('download-settings', [AppReleaseController::class, 'settings']);
+        Route::put('download-settings', [AppReleaseController::class, 'updateSettings'])->middleware('throttle:admin-writes');
     });
 });

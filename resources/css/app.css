@@ -4,6 +4,13 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Epilogue', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --color-cream: #FFF8E7; --color-cream-alt: #FBF6EE; --color-forest-900: #063B27; --color-forest-700: #14532D;
+    --color-leaf: #2E7D32; --color-gold: #D4A84F; --color-gold-light: #E8C875; --color-maroon: #8B1E2D;
+    --color-maroon-deep: #641522; --color-ink: #2B1710; --color-ink-muted: #806B5A;
 }
+
+::selection { background: #E8C875; color: #063B27; }
+@media (prefers-reduced-motion: no-preference) { .reveal { animation: reveal .45s ease-out both; } @keyframes reveal { from { opacity: 0; transform: translateY(12px) } } }
