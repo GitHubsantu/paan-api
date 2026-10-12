@@ -17,7 +17,7 @@ class Order extends Model
     protected $fillable = [
         'user_id', 'order_number', 'status', 'payment_status', 'subtotal', 'total',
         'comment', 'placed_at', 'completed_at', 'cancelled_at', 'cancel_reason',
-        'token', 'token_date', 'payment_method', 'payment_channel', 'idempotency_key',
+        'token', 'token_date', 'payment_method', 'payment_channel', 'idempotency_key', 'customer_name', 'customer_phone',
     ];
 
     protected function casts(): array

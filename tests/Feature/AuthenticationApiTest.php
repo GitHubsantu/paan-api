@@ -18,6 +18,8 @@ class AuthenticationApiTest extends TestCase
     public function test_rejects_admin_accounts_from_the_customer_otp_login_flow_with_403(): void
     {
         $admin = User::factory()->admin()->create();
+        config(['otp.mock_phones' => $admin->phone]);
+
         $this->postJson('/api/v1/auth/otp/send', ['phone' => $admin->phone, 'purpose' => 'login'])->assertOk();
 
         $this->postJson('/api/v1/auth/login', ['phone' => $admin->phone, 'otp' => config('otp.mock_code')])

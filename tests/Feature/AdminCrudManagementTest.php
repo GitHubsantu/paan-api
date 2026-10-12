@@ -64,11 +64,11 @@ class AdminCrudManagementTest extends TestCase
         $this->patchJson("/api/v1/admin/customers/{$customer->id}/block", ['is_active' => false, 'reason' => 'Repeated abuse'])
             ->assertOk()->assertJsonPath('data.blocked_reason', 'Repeated abuse');
         $this->assertDatabaseCount('personal_access_tokens', 0);
-        $this->postJson('/api/v1/auth/otp/send', ['phone' => $customer->phone])->assertOk();
+        $this->postJson('/api/v1/auth/otp/send', ['phone' => $customer->phone])->assertForbidden()->assertJsonPath('code', 'CUSTOMER_BLOCKED');
         $this->postJson('/api/v1/auth/otp/verify', ['phone' => $customer->phone, 'otp' => '123456'])->assertForbidden()->assertJsonPath('code', 'CUSTOMER_BLOCKED');
 
         $customer->forceFill(['is_active' => true, 'blocked_reason' => null])->save();
-        $this->deleteJson("/api/v1/admin/customers/{$customer->id}")->assertNoContent();
+        $this->deleteJson("/api/v1/admin/customers/{$customer->id}")->assertOk();
         $this->assertSoftDeleted('users', ['id' => $customer->id]);
         $this->assertDatabaseCount('device_tokens', 0);
         $this->postJson('/api/v1/admin/customers', ['name' => 'Replacement', 'phone' => $customer->phone])->assertConflict()->assertJsonPath('code', 'CUSTOMER_DELETED');

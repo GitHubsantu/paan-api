@@ -50,7 +50,15 @@ class OrderResource extends JsonResource
                     'name' => $history->changedBy->name,
                 ] : null,
             ])->all()),
-            'customer' => $this->whenLoaded('user', fn () => ['id' => $this->user->id, 'name' => $this->user->name, 'phone' => $this->user->phone]),
+            'customer' => $this->when($this->relationLoaded('user'), function (): array {
+                $customer = $this->user;
+
+                return [
+                    'id' => $customer?->id,
+                    'name' => $customer?->name ?? $this->customer_name,
+                    'phone' => $customer?->phone ?? $this->customer_phone,
+                ];
+            }),
         ];
     }
 }

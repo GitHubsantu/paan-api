@@ -24,6 +24,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'blocked_at' => 'datetime',
         ];
     }
 

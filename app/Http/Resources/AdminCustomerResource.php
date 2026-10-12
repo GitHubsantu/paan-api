@@ -15,7 +15,7 @@ class AdminCustomerResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
             'is_active' => $this->is_active,
-            'blocked_reason' => $this->blocked_reason,
+            'blocked_reason' => $this->is_active ? null : $this->blocked_reason,
             'orders_count' => $this->orders_count,
             'created_at' => $this->created_at?->toIso8601String(),
         ];

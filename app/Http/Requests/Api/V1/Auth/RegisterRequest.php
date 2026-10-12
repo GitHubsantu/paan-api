@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api\V1\Auth;
 
 use App\Support\Phone;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
@@ -21,7 +22,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:100'],
-            'phone' => ['required', 'regex:'.Phone::REGEX, 'unique:users,phone'],
+            'phone' => ['required', 'regex:'.Phone::REGEX, Rule::unique('users', 'phone')->withoutTrashed()],
             'otp' => ['required', 'digits:'.config('otp.length')],
         ];
     }

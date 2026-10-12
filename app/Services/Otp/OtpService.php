@@ -15,7 +15,16 @@ class OtpService
         return (bool) config('otp.mock') && ! app()->isProduction();
     }
 
-    /** Returns the plaintext code only in mock mode (for dev responses). */
+    public function isMockForPhone(string $phone): bool
+    {
+        $mockPhones = array_filter(
+            array_map('trim', explode(',', (string) config('otp.mock_phones'))),
+        );
+
+        return $this->isMock() && in_array($phone, $mockPhones, true);
+    }
+
+    /** Returns the plaintext code only for an allowlisted mock phone. */
     public function issue(string $phone): ?string
     {
         $last = OtpCode::where('phone', $phone)->latest('id')->first();
@@ -25,7 +34,8 @@ class OtpService
 
         OtpCode::where('phone', $phone)->whereNull('consumed_at')->delete();
 
-        $code = $this->isMock() ? (string) config('otp.mock_code') : $this->generate();
+        $isMockPhone = $this->isMockForPhone($phone);
+        $code = $isMockPhone ? (string) config('otp.mock_code') : $this->generate();
 
         OtpCode::create([
             'phone' => $phone,
@@ -35,7 +45,7 @@ class OtpService
 
         $this->sender->send($phone, $code);
 
-        return $this->isMock() ? $code : null;
+        return $isMockPhone ? $code : null;
     }
 
     public function verify(string $phone, string $code): void

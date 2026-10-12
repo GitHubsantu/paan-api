@@ -62,11 +62,14 @@ Route::prefix('v1')->group(function () {
         Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->whereNumber('order')->middleware('throttle:admin-writes');
         Route::post('orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->whereNumber('order')->middleware('throttle:admin-writes');
         Route::get('customers', [CustomerController::class, 'index']);
+        Route::get('customers/deleted', [CustomerController::class, 'deleted']);
         Route::post('customers', [CustomerController::class, 'store'])->middleware('throttle:admin-writes');
+        Route::post('customers/{customer}/restore', [CustomerController::class, 'restore'])->whereNumber('customer')->middleware('throttle:admin-writes');
         Route::get('customers/{customer}', [CustomerController::class, 'show'])->whereNumber('customer');
         Route::put('customers/{customer}', [CustomerController::class, 'update'])->whereNumber('customer')->middleware('throttle:admin-writes');
         Route::patch('customers/{customer}/block', [CustomerController::class, 'block'])->whereNumber('customer')->middleware('throttle:admin-writes');
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->whereNumber('customer')->middleware('throttle:admin-writes');
+        Route::delete('customers/{customer}/force', [CustomerController::class, 'forceDestroy'])->whereNumber('customer')->middleware('throttle:admin-writes');
         Route::get('settings', [SettingController::class, 'index']);
         Route::put('settings', [SettingController::class, 'update'])->middleware('throttle:admin-writes');
         Route::get('categories', [AdminCategoryController::class, 'index']);
