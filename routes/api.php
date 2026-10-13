@@ -50,9 +50,12 @@ Route::prefix('v1')->group(function () {
         Route::get('orders', [OrderController::class, 'index']);
         Route::get('orders/{order}', [OrderController::class, 'show'])->whereNumber('order');
         Route::get('orders/{order}/status', [OrderController::class, 'status'])->whereNumber('order');
-        Route::get('notifications', [NotificationController::class, 'index']);
-        Route::post('notifications/{id}/read', [NotificationController::class, 'read']);
-        Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
+        Route::post('orders/{order}/pickup', [OrderController::class, 'pickup'])->whereNumber('order')->middleware('throttle:pickup');
+        Route::get('notifications', [NotificationController::class, 'index'])->middleware('throttle:notifications');
+        Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->middleware('throttle:notifications');
+        Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->middleware('throttle:notifications');
+        Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->middleware('throttle:notifications');
+        Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->middleware('throttle:notifications');
         Route::post('device-tokens', [DeviceTokenController::class, 'store'])->middleware('throttle:device-tokens');
         Route::delete('device-tokens/{token}', [DeviceTokenController::class, 'destroy']);
     });

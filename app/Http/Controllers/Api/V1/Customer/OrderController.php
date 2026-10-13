@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api\V1\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CreateOrderRequest;
 use App\Http\Requests\Api\V1\OrderIndexRequest;
+use App\Http\Requests\Api\V1\PickupOrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Services\AdminAuditLogger;
 use App\Services\OrderService;
+use App\Services\OrderStatusService;
 use App\Services\ShopSettingsService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +21,8 @@ class OrderController extends Controller
     public function __construct(
         private OrderService $orders,
         private ShopSettingsService $shop,
+        private OrderStatusService $statuses,
+        private AdminAuditLogger $audit,
     ) {}
 
     public function index(OrderIndexRequest $request): JsonResponse
@@ -75,6 +80,17 @@ class OrderController extends Controller
                 'timestamp' => $history->created_at?->toIso8601String(),
             ])->values(),
         ], 'Order status retrieved successfully.');
+    }
+
+    public function pickup(PickupOrderRequest $request, int $order): JsonResponse
+    {
+        $pickedUpOrder = $this->statuses->pickup($order, $request->user(), $request->validated('code'));
+        $this->audit->log($request->user(), $request->user(), 'order.pickup_qr', ['order_id' => $pickedUpOrder->id, 'user_id' => $request->user()->id]);
+
+        return ApiResponse::success(
+            (new OrderResource($pickedUpOrder))->resolve($request),
+            'Order picked up.'
+        );
     }
 
     /**

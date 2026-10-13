@@ -44,9 +44,12 @@ Customer token required.
 | GET | `/orders` | List the customer's orders. |
 | GET | `/orders/{order}` | Order detail. |
 | GET | `/orders/{order}/status` | Order status. |
-| GET | `/notifications` | List notifications, newest first; `meta` includes `unread_count`. |
-| POST | `/notifications/{id}/read` | Mark one notification read. |
-| POST | `/notifications/read-all` | Mark every notification read. |
+| POST | `/orders/{order}/pickup` | Complete a ready order using its scanned QR code. |
+| GET | `/notifications?page=1&per_page=20` | List the customer's notifications, newest first. `per_page` is 1–50 (default 20). |
+| GET | `/notifications/unread-count` | Return `{"unread_count":3}`. |
+| POST | `/notifications/{id}/read` | Idempotently mark one owned notification read. Missing, malformed, or another user's ID returns `404 Notification not found.` |
+| POST | `/notifications/read-all` | Mark every unread notification for this customer read; returns the number updated. |
+| DELETE | `/notifications/{id}` | Permanently delete one owned notification. Missing, malformed, or another user's ID returns `404 Notification not found.` |
 | POST | `/device-tokens` | Register or move an Android FCM token to the authenticated user. |
 | DELETE | `/device-tokens/{token}` | Idempotently remove the authenticated user's token. |
 
@@ -57,6 +60,12 @@ Customer order-status notifications return this shape:
 ```json
 {"success":true,"data":[{"id":"uuid","type":"order_status","title":"Your order is ready for pickup","body":"Token #47 - show it at the counter.","order_id":12,"status":"ready","read_at":null,"created_at":"2026-10-13T10:00:00+05:30"}],"meta":{"current_page":1,"last_page":1,"per_page":20,"total":1,"unread_count":1}}
 ```
+
+All five notification endpoints require a customer token and are rate-limited to 60 requests per minute per user. Notification items never expose device tokens or phone numbers. Status-change FCM data includes the existing order fields plus `notification_id` (the UUID of the persisted notification). Notification records are retained for 90 days and pruned daily at 03:00 by `notifications:prune --days=90`.
+
+`GET /notifications` accepts optional integer `page` (minimum 1) and `per_page` (1–50, default 20). Invalid values return `422` with the standard `errors` envelope. A successful read response is paginated as shown above. `GET /notifications/unread-count` returns `{"success":true,"data":{"unread_count":3}}`.
+
+`POST /notifications/{id}/read` returns the notification item plus `unread_count`; repeated requests preserve the original `read_at`. `POST /notifications/read-all` returns `{"updated":n,"unread_count":0}`. `DELETE /notifications/{id}` returns `{"unread_count":n}`. For an invalid UUID, unknown UUID, or another customer's UUID, the read and delete endpoints return `404` with `{"success":false,"message":"Notification not found."}`.
 
 ## Firebase push notifications
 
@@ -82,6 +91,29 @@ Active admin token required for every endpoint in this and the remaining admin a
 | GET | `/admin/orders/{order}` | Order detail. |
 | PATCH | `/admin/orders/{order}/status` | Update order status. |
 | POST | `/admin/orders/{order}/cancel` | Cancel an order. |
+
+When an order is `ready`, `GET /admin/orders/{order}` additionally includes `pickup_qr` and `completed_via`:
+
+```json
+{"pickup_qr":{"payload":"PAANPICKUP1|PAAN-10012|<pickup_code>"},"completed_via":null}
+```
+
+`pickup_qr` is `null` for every other status. The QR payload format is exactly `PAANPICKUP1|<order_number>|<pickup_code>`. It is intentionally omitted from the admin order list and all customer responses.
+
+### QR pickup
+
+Customer token required. Scan the admin QR and send only its code component:
+
+```http
+POST /orders/{order}/pickup
+Content-Type: application/json
+
+{"code":"<pickup_code>"}
+```
+
+Success returns `200` with `{"success":true,"message":"Order picked up.","data":{...order...}}`. The order becomes `completed`, its code is invalidated, and `completed_via` is recorded as `qr`. Existing manual admin completion remains available and records `completed_via` as `admin`.
+
+Errors use the standard envelope: `404` `Order not found.` for another customer's order; `409 ALREADY_PICKED_UP` for a completed order; `409 ORDER_NOT_READY` when not ready; `422 PICKUP_CODE_INVALID` for a wrong code; and `429 TOO_MANY_ATTEMPTS` after five invalid attempts for the same customer/order in ten minutes. The endpoint is also throttled to 20 requests per minute per customer.
 
 ## Customer administration
 

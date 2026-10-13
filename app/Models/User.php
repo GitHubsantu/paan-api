@@ -55,4 +55,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(DeviceToken::class);
     }
+
+    public function customerNotifications(): HasMany
+    {
+        return $this->hasMany(CustomerNotification::class);
+    }
 }

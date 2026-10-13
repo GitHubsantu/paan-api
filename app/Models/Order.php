@@ -18,7 +18,10 @@ class Order extends Model
         'user_id', 'order_number', 'status', 'payment_status', 'subtotal', 'total',
         'comment', 'placed_at', 'completed_at', 'cancelled_at', 'cancel_reason',
         'token', 'token_date', 'payment_method', 'payment_channel', 'idempotency_key', 'customer_name', 'customer_phone',
+        'pickup_code', 'completed_via',
     ];
+
+    protected $hidden = ['pickup_code'];
 
     protected function casts(): array
     {

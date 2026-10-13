@@ -66,11 +66,16 @@ class OrderController extends Controller
 
     public function show(Order $order): JsonResponse
     {
+        $order = $this->statuses->ensurePickupCode($order);
         $order->load(['user:id,name,phone', 'items.addons', 'payment', 'statusHistories.changedBy:id,name']);
 
         $data = (new OrderResource($order))->resolve(request());
         $data['order'] = $data;
         $data['status_history'] = $data['history'] ?? [];
+        $data['completed_via'] = $order->completed_via;
+        $data['pickup_qr'] = $order->status === OrderStatus::Ready
+            ? ['payload' => "PAANPICKUP1|{$order->order_number}|{$order->pickup_code}"]
+            : null;
 
         return ApiResponse::success($data, 'Order retrieved successfully.');
     }
