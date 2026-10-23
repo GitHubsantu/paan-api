@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
+    public function notifyPaymentReceived(Order $order): void
+    {
+        $order->loadMissing('user.deviceTokens');
+        if ($order->user === null) {
+            return;
+        }
+
+        $data = ['type' => 'payment_received', 'order_id' => (string) $order->id, 'title' => 'Payment received', 'body' => "Your payment for order {$order->order_number} was received."];
+        $order->user->deviceTokens->where('app', 'customer')->each(fn ($deviceToken) => SendFcmPush::dispatch($deviceToken->id, $data, 3600, "payment_{$order->id}"));
+    }
+
     public function notifyOrderStatusChanged(Order $order): void
     {
         $order->loadMissing('user.deviceTokens');

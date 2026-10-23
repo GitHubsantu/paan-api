@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class OrderStatusService
 {
-    public function __construct(private PaymentService $payments, private NotificationService $notifications) {}
+    public function __construct(private NotificationService $notifications) {}
 
     public function transition(Order $order, OrderStatus $to, User $admin, ?string $note = null): Order
     {
@@ -70,7 +70,7 @@ class OrderStatusService
     public function cancel(Order $order, User $admin, string $reason): Order
     {
         return DB::transaction(function () use ($order, $admin, $reason) {
-            $order = Order::query()->with('payment')->lockForUpdate()->findOrFail($order->id);
+            $order = Order::query()->with('payments')->lockForUpdate()->findOrFail($order->id);
             $from = $order->status;
 
             if (! in_array($from, [OrderStatus::Pending, OrderStatus::Making, OrderStatus::Ready], true)) {
@@ -91,7 +91,7 @@ class OrderStatusService
                 'note' => $reason,
             ]);
             if ($order->payment_status === PaymentStatus::Paid) {
-                $this->payments->refundForOrder($order);
+                $order->update(['refund_pending' => true]);
             }
             Log::info('order.cancelled', ['order_id' => $order->id, 'admin_id' => $admin->id]);
 
@@ -107,7 +107,7 @@ class OrderStatusService
         return $order->fresh([
             'user:id,name,phone',
             'items.addons',
-            'payment',
+            'payments',
             'statusHistories.changedBy:id,name',
         ]);
     }

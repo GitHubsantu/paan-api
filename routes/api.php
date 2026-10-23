@@ -18,9 +18,13 @@ use App\Http\Controllers\Api\V1\Customer\OrderController;
 use App\Http\Controllers\Api\V1\Customer\ProductController;
 use App\Http\Controllers\Api\V1\Customer\ProfileController;
 use App\Http\Controllers\Api\V1\Customer\ShopController;
+use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\GatewayWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+
+    Route::post('webhooks/gateway', GatewayWebhookController::class)->middleware('throttle:120,1');
 
     // ---- Public auth ----
     Route::prefix('auth')->group(function () {
@@ -51,6 +55,7 @@ Route::prefix('v1')->group(function () {
         Route::get('orders/{order}', [OrderController::class, 'show'])->whereNumber('order');
         Route::get('orders/{order}/status', [OrderController::class, 'status'])->whereNumber('order');
         Route::post('orders/{order}/pickup', [OrderController::class, 'pickup'])->whereNumber('order')->middleware('throttle:pickup');
+        Route::post('orders/{order}/pay', [PaymentController::class, 'pay'])->whereNumber('order')->middleware('throttle:payments');
         Route::get('notifications', [NotificationController::class, 'index'])->middleware('throttle:notifications');
         Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->middleware('throttle:notifications');
         Route::post('notifications/{id}/read', [NotificationController::class, 'read'])->middleware('throttle:notifications');

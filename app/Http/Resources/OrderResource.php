@@ -16,6 +16,8 @@ class OrderResource extends JsonResource
             'token' => $this->token,
             'status' => $this->status->value,
             'payment_status' => $this->payment_status->value,
+            'paid_at' => $this->paid_at?->toIso8601String(),
+            'refund_pending' => $this->when($request->user()?->isAdmin(), $this->refund_pending),
             'payment_method' => $this->payment_method,
             'payment_channel' => $this->payment_channel,
             'subtotal' => (float) $this->subtotal,
@@ -59,6 +61,7 @@ class OrderResource extends JsonResource
                     'phone' => $customer?->phone ?? $this->customer_phone,
                 ];
             }),
+            'last_transaction_id' => $this->when($request->user()?->isAdmin() && $this->relationLoaded('payments'), fn () => $this->payments->sortByDesc('id')->first()?->transaction_id),
         ];
     }
 }

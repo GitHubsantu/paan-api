@@ -7,6 +7,16 @@ return [
         'project_id' => env('FIREBASE_PROJECT_ID'),
     ],
 
+    'gateway' => [
+        'base_url' => env('GATEWAY_BASE_URL', 'https://imdevops.in'),
+        'api_key' => env('GATEWAY_API_KEY'),
+        'api_secret' => env('GATEWAY_API_SECRET'),
+        'domain' => env('GATEWAY_DOMAIN'),
+        'return_url' => env('GATEWAY_RETURN_URL'),
+        'verify_ssl' => env('GATEWAY_VERIFY_SSL', true),
+        'deeplink_scheme' => env('APP_DEEPLINK_SCHEME', 'safarpaan'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

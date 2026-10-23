@@ -97,7 +97,9 @@ class OrderService
                 'note' => 'Order placed',
             ]);
 
-            $this->payments->createForOrder($order, ['method' => $data['payment_method'] ?? null]);
+            if (($data['payment_method'] ?? 'mock') === 'mock') {
+                $this->payments->createForOrder($order, ['method' => 'mock']);
+            }
 
             return $order;
         });
@@ -109,7 +111,9 @@ class OrderService
                 'user_id' => $user->id,
                 'total' => (string) $order->total,
             ]);
-            DB::afterCommit(fn () => $this->adminNotifier->notifyNewOrder($order));
+            if ($order->payment_status === PaymentStatus::Paid) {
+                DB::afterCommit(fn () => $this->adminNotifier->notifyNewOrder($order));
+            }
         }
 
         return [$order->load(['items.addons', 'payment']), $created];

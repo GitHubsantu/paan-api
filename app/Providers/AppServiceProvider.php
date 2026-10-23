@@ -46,5 +46,6 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('admin-writes', fn (Request $r) => Limit::perMinute(60)->by($r->user()?->id ?: $r->ip()));
         RateLimiter::for('device-tokens', fn (Request $r) => Limit::perMinute(10)->by($r->user()?->id ?: $r->ip()));
         RateLimiter::for('notifications', fn (Request $r) => Limit::perMinute(60)->by($r->user()?->id ?: $r->ip()));
+        RateLimiter::for('payments', fn (Request $r) => Limit::perMinute(10)->by($r->user()?->id ?: $r->ip()));
     }
 }

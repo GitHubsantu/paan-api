@@ -6,6 +6,18 @@ Send `Accept: application/json`. Send `Content-Type: application/json` unless an
 
 Responses use `{"success":true,"message":"...","data":...}`. Validation errors use `{"success":false,"message":"...","errors":{"field":["..."]}}`. Paginated responses also include `meta`.
 
+Order resources include `payment_status` and `paid_at`; admin order details also include `refund_pending` and `last_transaction_id`. Pending gateway orders are excluded from admin queues and dashboard order counts/revenue.
+Verified failed, expired, or cancelled gateway payments set `payment_status` to `failed`, set `status` to terminal `payment_failed`, and populate `completed_at`.
+
+## Hosted payment routes
+
+| Method | Path | Authentication | Notes |
+| --- | --- | --- | --- |
+| POST | `/api/v1/webhooks/gateway` | None | StreamForge webhook. Raw-body HMAC verified; state is verified server-side before changing an order. |
+| GET | `/payment/return` | None | Browser-only payment result page. It never changes payment state. |
+
+Configure `GATEWAY_BASE_URL`, `GATEWAY_API_KEY`, `GATEWAY_API_SECRET`, `GATEWAY_DOMAIN`, `GATEWAY_RETURN_URL`, `GATEWAY_VERIFY_SSL`, `APP_DEEPLINK_SCHEME`, and `PAYMENT_EXPIRY_MINUTES` (default `15`). Run `php artisan schedule:work` (or the server cron invoking `php artisan schedule:run` every minute). `orders:expire-pending-payments` runs every minute, confirms an abandoned gateway checkout with the gateway, and only then marks an unpaid order as failed.
+
 ## Authentication
 
 | Method | Path | Authentication | Notes |
@@ -45,6 +57,7 @@ Customer token required.
 | GET | `/orders/{order}` | Order detail. |
 | GET | `/orders/{order}/status` | Order status. |
 | POST | `/orders/{order}/pickup` | Complete a ready order using its scanned QR code. |
+| POST | `/orders/{order}/pay` | Start or reuse hosted checkout for an owned pending gateway order. Throttled to 10/min. Returns `order_id` as a string, existing lowercase `payment_status`, and `checkout_url`; a paid order returns `paid` and `checkout_url:null`. Failed orders are retained for customer audit/history but cannot be retried and never enter the kitchen queue. |
 | GET | `/notifications?page=1&per_page=20` | List the customer's notifications, newest first. `per_page` is 1–50 (default 20). |
 | GET | `/notifications/unread-count` | Return `{"unread_count":3}`. |
 | POST | `/notifications/{id}/read` | Idempotently mark one owned notification read. Missing, malformed, or another user's ID returns `404 Notification not found.` |

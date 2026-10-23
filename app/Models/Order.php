@@ -18,7 +18,7 @@ class Order extends Model
         'user_id', 'order_number', 'status', 'payment_status', 'subtotal', 'total',
         'comment', 'placed_at', 'completed_at', 'cancelled_at', 'cancel_reason',
         'token', 'token_date', 'payment_method', 'payment_channel', 'idempotency_key', 'customer_name', 'customer_phone',
-        'pickup_code', 'completed_via',
+        'pickup_code', 'completed_via', 'paid_at', 'refund_pending',
     ];
 
     protected $hidden = ['pickup_code'];
@@ -34,6 +34,8 @@ class Order extends Model
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'token_date' => 'date',
+            'paid_at' => 'datetime',
+            'refund_pending' => 'boolean',
         ];
     }
 
@@ -50,6 +52,11 @@ class Order extends Model
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function statusHistories(): HasMany

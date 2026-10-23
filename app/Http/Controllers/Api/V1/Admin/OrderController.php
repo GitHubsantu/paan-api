@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\CancelOrderRequest;
 use App\Http\Requests\Api\V1\Admin\OrderIndexRequest;
@@ -34,7 +35,7 @@ class OrderController extends Controller
     public function index(OrderIndexRequest $request): JsonResponse
     {
         $filters = $request->validated();
-        $orders = Order::query()->with(['user:id,name,phone', 'items.addons', 'statusHistories.changedBy:id,name'])
+        $orders = Order::query()->where('payment_status', PaymentStatus::Paid)->with(['user:id,name,phone', 'items.addons', 'statusHistories.changedBy:id,name'])
             ->when($filters['status'] ?? null, function ($query, string $status): void {
                 if ($status === 'active') {
                     $query->whereIn('status', ['pending', 'making', 'ready']);
@@ -67,7 +68,7 @@ class OrderController extends Controller
     public function show(Order $order): JsonResponse
     {
         $order = $this->statuses->ensurePickupCode($order);
-        $order->load(['user:id,name,phone', 'items.addons', 'payment', 'statusHistories.changedBy:id,name']);
+        $order->load(['user:id,name,phone', 'items.addons', 'payments', 'statusHistories.changedBy:id,name']);
 
         $data = (new OrderResource($order))->resolve(request());
         $data['order'] = $data;

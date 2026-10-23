@@ -9,6 +9,7 @@ enum OrderStatus: string
     case Ready = 'ready';
     case Completed = 'completed';
     case AdminCancelled = 'admin_cancelled';
+    case PaymentFailed = 'payment_failed';
 
     /** @return array<int, self> */
     public function allowedTransitions(): array
@@ -17,7 +18,7 @@ enum OrderStatus: string
             self::Pending => [self::Making, self::AdminCancelled],
             self::Making => [self::Ready, self::AdminCancelled],
             self::Ready => [self::Completed, self::AdminCancelled],
-            self::Completed, self::AdminCancelled => [],
+            self::Completed, self::AdminCancelled, self::PaymentFailed => [],
         };
     }
 

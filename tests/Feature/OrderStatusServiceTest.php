@@ -45,17 +45,17 @@ class OrderStatusServiceTest extends TestCase
         }
     }
 
-    public function test_cancelling_a_paid_order_refunds_its_mock_payment(): void
+    public function test_cancelling_a_paid_order_marks_its_refund_as_pending(): void
     {
         $admin = User::factory()->admin()->create();
         $order = $this->createOrder(OrderStatus::Ready);
-        $order->payment()->create(['provider' => 'mock', 'amount' => '50.00', 'status' => PaymentStatus::Paid]);
+        $order->payments()->create(['merchant_reference' => 'PAAN-'.$order->id.'-1', 'amount' => '50.00', 'status' => 'success']);
 
         $cancelled = app(OrderStatusService::class)->cancel($order, $admin, 'Out of stock.');
 
         $this->assertSame(OrderStatus::AdminCancelled, $cancelled->status);
-        $this->assertSame(PaymentStatus::Refunded, $cancelled->payment_status);
-        $this->assertDatabaseHas('payments', ['order_id' => $order->id, 'status' => 'refunded']);
+        $this->assertSame(PaymentStatus::Paid, $cancelled->payment_status);
+        $this->assertTrue($cancelled->refund_pending);
     }
 
     private function createOrder(OrderStatus $status): Order

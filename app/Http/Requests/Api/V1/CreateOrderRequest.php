@@ -23,7 +23,7 @@ class CreateOrderRequest extends FormRequest
             'items.*.options.sweetness' => ['nullable', 'in:regular,mild,low_gulkand,extra_gulkand'],
             'items.*.options.supari' => ['nullable', 'in:fried,kacha'],
             'comment' => ['nullable', 'string', 'max:200'],
-            'payment_method' => ['nullable', 'in:mock'],
+            'payment_method' => ['nullable', 'in:mock,gateway'],
             'payment_channel' => ['nullable', 'in:upi,card'],
         ];
     }

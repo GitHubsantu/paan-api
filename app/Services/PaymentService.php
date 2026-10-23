@@ -20,23 +20,14 @@ class PaymentService
             'amount' => $order->total,
             'status' => PaymentStatus::Pending,
         ]);
-
         $result = $this->gateway->authorize($payment, $input);
-
         $payment->update([
             'status' => $result['status'],
             'payment_reference' => $result['reference'],
             'paid_at' => $result['status'] === PaymentStatus::Paid ? now() : null,
         ]);
-
         $order->update(['payment_status' => $result['status']]);
-
-        Log::info('payment.status_changed', [
-            'order_id' => $order->id,
-            'payment_id' => $payment->id,
-            'provider' => $payment->provider,
-            'status' => $result['status']->value,
-        ]);
+        Log::info('payment.status_changed', ['order_id' => $order->id, 'payment_id' => $payment->id, 'provider' => $payment->provider, 'status' => $result['status']->value]);
 
         return $payment;
     }
@@ -45,13 +36,8 @@ class PaymentService
     {
         $payment = $order->payment;
 
-        if (! $payment || $payment->status !== PaymentStatus::Paid || $payment->provider !== 'mock') {
-            return;
+        if ($order->payment_status === PaymentStatus::Paid) {
+            $order->update(['refund_pending' => true]);
         }
-
-        $payment->update(['status' => PaymentStatus::Refunded]);
-        $order->update(['payment_status' => PaymentStatus::Refunded]);
-
-        Log::info('payment.refunded', ['order_id' => $order->id, 'payment_id' => $payment->id]);
     }
 }

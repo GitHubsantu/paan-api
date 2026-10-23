@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('notifications:prune --days=90')->dailyAt('03:00');
+Schedule::command('orders:expire-pending-payments')->everyMinute()->withoutOverlapping()->onOneServer();
+Schedule::command('payments:reconcile-pending')->everyMinute()->withoutOverlapping();

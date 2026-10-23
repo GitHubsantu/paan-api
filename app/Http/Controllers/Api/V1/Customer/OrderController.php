@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Customer;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CreateOrderRequest;
 use App\Http\Requests\Api\V1\OrderIndexRequest;
@@ -11,6 +12,7 @@ use App\Models\Order;
 use App\Services\AdminAuditLogger;
 use App\Services\OrderService;
 use App\Services\OrderStatusService;
+use App\Services\PendingPaymentReconciliationService;
 use App\Services\ShopSettingsService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +25,7 @@ class OrderController extends Controller
         private ShopSettingsService $shop,
         private OrderStatusService $statuses,
         private AdminAuditLogger $audit,
+        private PendingPaymentReconciliationService $payments,
     ) {}
 
     public function index(OrderIndexRequest $request): JsonResponse
@@ -64,13 +67,19 @@ class OrderController extends Controller
 
     public function status(Request $request, int $order): JsonResponse
     {
-        $order = $this->findCustomerOrder($request, $order, ['statusHistories']);
+        $order = $this->findCustomerOrder($request, $order, ['statusHistories', 'payments']);
+        $this->payments->reconcileOrder($order);
+        $order->refresh()->load(['statusHistories', 'payments']);
+        $failureReason = $order->payment_status === PaymentStatus::Failed
+            ? $order->payments->whereIn('status', ['failed', 'expired', 'cancelled'])->sortByDesc('id')->first()?->failure_reason
+            : null;
 
         return ApiResponse::success([
             'id' => $order->id,
             'order_number' => $order->order_number,
             'status' => $order->status->value,
             'payment_status' => $order->payment_status->value,
+            'failure_reason' => $failureReason,
             'updated_at' => $order->updated_at?->toIso8601String(),
             'pickup_message' => $order->status->value === 'ready'
                 ? $this->shop->all()['pickup_message']
