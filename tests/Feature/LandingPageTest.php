@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class LandingPageTest extends TestCase
@@ -23,5 +26,20 @@ class LandingPageTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
+    }
+
+    public function test_landing_page_renders_featured_products_and_category_names(): void
+    {
+        Cache::forget('landing.v1');
+        $category = Category::factory()->create(['name' => 'Classic Paan']);
+        Product::factory()->for($category)->create([
+            'name' => 'Royal Paan',
+            'is_featured' => true,
+        ]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSeeText('Classic Paan')
+            ->assertSeeText('Royal Paan');
     }
 }
