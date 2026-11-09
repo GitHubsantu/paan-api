@@ -6,6 +6,7 @@ use App\Services\AdminNotifications\AdminOrderNotifier;
 use App\Services\AdminNotifications\FcmAdminOrderNotifier;
 use App\Services\Otp\NullOtpSender;
 use App\Services\Otp\OtpSender;
+use App\Services\Otp\SimBridgeOtpSender;
 use App\Services\Payments\MockPaymentGateway;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Push\FcmAccessTokenProvider;
@@ -21,8 +22,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Swap for a real SMS sender later.
-        $this->app->bind(OtpSender::class, NullOtpSender::class);
+        $this->app->bind(OtpSender::class, fn () => match (config('otp.driver')) {
+            'null' => new NullOtpSender,
+            'simbridge' => new SimBridgeOtpSender,
+            default => throw new \RuntimeException('Unsupported OTP driver.'),
+        });
         $this->app->bind(AdminOrderNotifier::class, FcmAdminOrderNotifier::class);
         $this->app->bind(PushSender::class, FcmPushSender::class);
         $this->app->bind(FcmAccessTokenProvider::class, GoogleFcmAccessTokenProvider::class);

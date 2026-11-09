@@ -11,6 +11,13 @@ class UnifiedOtpAuthenticationTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['otp.driver' => 'null']);
+    }
+
     public function test_verifies_an_unknown_phone_and_creates_a_customer_with_a_null_name(): void
     {
         $phone = '9888888887';

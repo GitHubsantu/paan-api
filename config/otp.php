@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'driver' => env('OTP_DRIVER', 'null'),
     'length' => 6,
     'ttl_minutes' => 5,
     'resend_seconds' => 30,

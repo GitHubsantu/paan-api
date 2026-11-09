@@ -17,6 +17,11 @@ return [
         'deeplink_scheme' => env('APP_DEEPLINK_SCHEME', 'safarpaan'),
     ],
 
+    'simbridge' => [
+        'base_url' => env('SIMBRIDGE_BASE_URL'),
+        'api_key' => env('SIMBRIDGE_API_KEY'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

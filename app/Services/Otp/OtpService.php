@@ -37,13 +37,13 @@ class OtpService
         $isMockPhone = $this->isMockForPhone($phone);
         $code = $isMockPhone ? (string) config('otp.mock_code') : $this->generate();
 
+        $this->sender->send($phone, $code);
+
         OtpCode::create([
             'phone' => $phone,
             'code_hash' => $this->hash($phone, $code),
             'expires_at' => now()->addMinutes(config('otp.ttl_minutes')),
         ]);
-
-        $this->sender->send($phone, $code);
 
         return $isMockPhone ? $code : null;
     }
